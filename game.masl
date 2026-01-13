@@ -1,0 +1,35 @@
+Match {
+
+    Game {
+        stage Battlefield
+        players {
+            P1 Marth
+            P2 Fox
+        }
+        time 8
+        stocks 4
+    }
+
+    // Events here
+    P1 dash R // fox full dash right (keeps going)
+    P1 wait 5 // fox dashes for 5 frames
+    P1 dash L // fox dashes back left
+    P1 wait 5 // fox dashes for 5 frames
+    P1 wd R // fox wavedashes backwards, towards the right (facing left)
+    P1 1 sh // fox short hops, holding full right
+    P1 0 dj // fox double jumps, holding full left
+    P1 wait ff // fox fast falls ASAP 
+
+
+    P1 wd L
+    P2 ... 
+    P1 ...
+    P1 ...
+    P2 ... 
+    P1 ...
+    P1 ...
+    P2 ... 
+    P1 ...
+    P2 ... 
+    
+}
