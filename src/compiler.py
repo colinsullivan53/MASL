@@ -122,7 +122,8 @@ class _CompilerContext:
         self.defs: dict[tuple[str, int], Def] = {}
         self.queues: dict[int, list[Action | Barrier]] = {}
         self.global_vars: dict[str, object] = {}
- 
+        self._context: list[str] = []
+
         for d in match.defs:
             self.defs[(d.name, len(d.params))] = d
 
@@ -133,6 +134,11 @@ class _CompilerContext:
                     port = _port_number(p.port)
                     self.static_ports.add(port)
                     self.queues[port] = []
+
+    def _error(self, message: str) -> CompilerError:
+        if self._context:
+            return CompilerError(f"{message} (in {' > '.join(self._context)})")
+        return CompilerError(message)
 
     def eval_expr(self, expr: Expression, variables: dict[str, object]) -> object:
         if isinstance(expr, IntegerLiteral):
@@ -213,12 +219,12 @@ class _CompilerContext:
                 elif isinstance(val, str) and val in BARRIER_CONDITIONS:
                     output.append(Barrier(condition=val))
                 else:
-                    raise CompilerError(f"Invalid wait condition: {val}")
+                    raise self._error(f"Invalid wait condition: {val}")
 
             elif isinstance(segment, HoldSegment):
                 duration = self.eval_expr(segment.duration, variables)
                 if not isinstance(duration, int):
-                    raise CompilerError(f"Hold duration must be integer, got {type(duration)}")
+                    raise self._error(f"Hold duration must be integer, got {type(duration)}")
                 if output and isinstance(output[-1], Action) and output[-1].frames:
                     last_frame = output[-1].frames[-1]
                     output[-1].frames.extend([last_frame] * duration)
@@ -239,16 +245,19 @@ class _CompilerContext:
         if key in BUILTINS:
             return BUILTINS[key](eval_args, variables)
 
-        raise CompilerError(f"Unknown action: {name}/{arity}")
+        raise self._error(f"Unknown action: {name}/{arity}")
 
     def _exec_def(self, defn: Def, args: list, caller_vars: dict[str, object], port: int | None, append_to_queue: bool = True) -> list[Action | Barrier]:
-        """Execute a def, returning the items it produces.""" 
+        """Execute a def, returning the items it produces."""
         local_vars = dict(caller_vars)
         local_vars.update(self.global_vars)
         for param_name, arg_val in zip(defn.params, args):
             local_vars[param_name] = arg_val
 
-        return self._exec_statements(defn.body, local_vars, port, append_to_queue=append_to_queue)
+        self._context.append(f"Def {defn.name}({', '.join(str(a) for a in args)})")
+        result = self._exec_statements(defn.body, local_vars, port, append_to_queue=append_to_queue)
+        self._context.pop()
+        return result
 
     def _exec_statements(self, statements: list, variables: dict[str, object], port: int | None, append_to_queue: bool = True) -> list[Action | Barrier]:
         """Execute a list of statements, returning produced items."""
@@ -258,11 +267,17 @@ class _CompilerContext:
             if isinstance(stmt, PlayerAction):
                 if stmt.player == "implicit":
                     if port is None:
-                        raise CompilerError("Implicit player action with no port context")
+                        raise self._error("Implicit player action with no port context")
                     p = port
                 else:
                     p = _port_number(stmt.player)
+                chain_desc = " :: ".join(
+                    seg.name if isinstance(seg, ActionSegment) else type(seg).__name__.replace("Segment", "").lower()
+                    for seg in stmt.chain
+                )
+                self._context.append(f"{stmt.player} {chain_desc}")
                 items = self.compile_chain(stmt.chain, variables, p)
+                self._context.pop()
                 if append_to_queue:
                     if p not in self.queues:
                         self.queues[p] = []
@@ -283,7 +298,7 @@ class _CompilerContext:
                         self.queues[port].extend(items)
                     output.extend(items)
                 else:
-                    raise CompilerError(f"Unknown def: {stmt.name}/{len(eval_args)}")
+                    raise self._error(f"Unknown def: {stmt.name}/{len(eval_args)}")
 
             elif isinstance(stmt, LetStatement):
                 variables[stmt.name] = self.eval_expr(stmt.value, variables)
@@ -305,14 +320,14 @@ class _CompilerContext:
                 while self.eval_expr(stmt.condition, variables):
                     iterations += 1
                     if iterations > MAX_ITERATIONS:
-                        raise CompilerError(f"While loop exceeded {MAX_ITERATIONS} iterations")
+                        raise self._error(f"While loop exceeded {MAX_ITERATIONS} iterations")
                     items = self._exec_statements(stmt.body, variables, port, append_to_queue=append_to_queue)
                     output.extend(items)
 
             elif isinstance(stmt, ForStatement):
                 iterable = self.eval_expr(stmt.iterable, variables)
                 if not hasattr(iterable, '__iter__'):
-                    raise CompilerError(f"For loop target is not iterable: {iterable}")
+                    raise self._error(f"For loop target is not iterable: {iterable}")
                 for val in iterable:  # type: ignore[union-attr]
                     variables[stmt.variable] = val
                     items = self._exec_statements(stmt.body, variables, port, append_to_queue=append_to_queue)
@@ -330,6 +345,8 @@ def compile_match(match: Match) -> dict[int, list[Action | Barrier]]:
  
     for block in match.static_blocks:
         block_vars = dict(ctx.global_vars)
+        ctx._context.append(f"Static {block.name}")
         ctx._exec_statements(block.statements, block_vars, None)
+        ctx._context.pop()
 
     return ctx.queues
