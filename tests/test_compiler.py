@@ -5,7 +5,7 @@ from src.compiler import compile_match, InputFrame, Action, Barrier, CompilerErr
 
 GAME_HEADER = "Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }"
 
-def compile_source(source: str) -> dict[int, list]:
+def compile_source(source: str) -> dict[int, list[Action | Barrier]]:
     tokens = Lexer(source).tokenize()
     ast = Parser(tokens).parse()
     return compile_match(ast)
