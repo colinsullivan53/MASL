@@ -1,7 +1,8 @@
 from src.runner import Runner, CHARACTER_MAP, STAGE_MAP, BUTTON_MAP
 from src.compiler import InputFrame, Action
 from src.scheduler import Scheduler
-from unittest.mock import MagicMock
+from src.parser import PlayerConfig, Game
+from unittest.mock import MagicMock, patch
 
 def test_character_map_has_common_chars():
     assert "Fox" in CHARACTER_MAP
@@ -68,3 +69,54 @@ def test_dry_run_empty():
     runner = Runner(sched)
     results = runner.dry_run(3)
     assert len(results) == 3
+
+
+def test_all_idle_no_game_config():
+    sched = Scheduler()
+    sched.load(1, [Action(frames=[InputFrame()])])
+    runner = Runner(sched)
+    assert not runner.all_idle()
+    sched.step(None)  # consume the single frame
+    assert runner.all_idle()
+
+
+def test_all_idle_with_game_config():
+    game = Game(
+        stage="FinalDestination",
+        players=[
+            PlayerConfig(port="P1", character="Fox", player_type="Static"),
+            PlayerConfig(port="P2", character=None, player_type="Human"),
+        ],
+    )
+    sched = Scheduler()
+    sched.load(1, [Action(frames=[InputFrame()])])
+    runner = Runner(sched, game_config=game)
+    assert not runner.all_idle()
+    sched.step(None)
+    assert runner.all_idle()  # only checks P1 (static), ignores P2 (human)
+
+
+def test_stop_without_console():
+    sched = Scheduler()
+    runner = Runner(sched)
+    runner.stop()  # should not raise
+
+
+def test_stop_with_console():
+    sched = Scheduler()
+    runner = Runner(sched)
+    mock_console = MagicMock()
+    runner._console = mock_console
+    runner.stop()
+    mock_console.stop.assert_called_once()
+    assert runner._console is None
+
+
+def test_run_requires_config():
+    sched = Scheduler()
+    runner = Runner(sched)
+    try:
+        runner.run()
+        assert False, "Should have raised"
+    except (RuntimeError, ImportError):
+        pass  # RuntimeError if melee installed, ImportError if not
