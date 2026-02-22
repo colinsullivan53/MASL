@@ -13,6 +13,8 @@ from src.parser import (
 from src.source_map import SourceLocation
 
 
+MAX_ITERATIONS = 10000  # Safeguard against infinite loops in compilation
+
 # IR Types 
 
 @dataclass(frozen=True)
@@ -302,8 +304,8 @@ class _CompilerContext:
                 iterations = 0
                 while self.eval_expr(stmt.condition, variables):
                     iterations += 1
-                    if iterations > 10000:
-                        raise CompilerError("While loop exceeded 10000 iterations")
+                    if iterations > MAX_ITERATIONS:
+                        raise CompilerError(f"While loop exceeded {MAX_ITERATIONS} iterations")
                     items = self._exec_statements(stmt.body, variables, port, append_to_queue=append_to_queue)
                     output.extend(items)
 
