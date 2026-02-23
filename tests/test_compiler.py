@@ -3,7 +3,7 @@ from src.lexer import Lexer
 from src.parser import Parser
 from src.compiler import compile_match, InputFrame, Action, Barrier, CompilerError
 
-GAME_HEADER = "Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }"
+GAME_HEADER = "Game { Stage FinalDestination Players { Static P1 Fox } }"
 
 def compile_source(source: str) -> dict[int, list[Action | Barrier]]:
     tokens = Lexer(source).tokenize()
@@ -201,7 +201,7 @@ def test_arithmetic_expressions():
 def test_human_player_no_queue():
     queues = compile_source("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox Human P3 } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox Human P3 } }
         Static test { P1 button(A) }
     }
     """)
@@ -211,7 +211,7 @@ def test_human_player_no_queue():
 def test_multiple_players():
     queues = compile_source("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox Static P2 Falco } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox Static P2 Falco } }
         Static test {
             P1 button(A)
             P2 button(B)

@@ -5,7 +5,7 @@ def test_dry_run_basic(tmp_path):
     masl_file = tmp_path / "test.masl"
     masl_file.write_text("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox }}
         Static test { P1 button(A) :: wait 5 }
     }
     """)
@@ -20,7 +20,7 @@ def test_dry_run_debug(tmp_path):
     masl_file = tmp_path / "test.masl"
     masl_file.write_text("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox }}
         Static test { P1 button(A) :: wait 3 }
     }
     """)
@@ -44,7 +44,7 @@ def test_no_dolphin_no_iso(tmp_path):
     masl_file = tmp_path / "test.masl"
     masl_file.write_text("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox }}
         Static test { P1 button(A) }
     }
     """)

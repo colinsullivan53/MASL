@@ -57,11 +57,6 @@ class CallExpr(Expression):
     name: str
     args: list[Expression]
 
-@dataclass
-class MemberAccess(Expression):
-    obj: Expression
-    member: str
-
 # --- Chain Segments ---
 
 @dataclass
@@ -114,14 +109,6 @@ class WhileStatement(Statement):
     body: list[Statement]
 
 @dataclass
-class ContinueStatement(Statement):
-    pass
-
-@dataclass
-class BreakStatement(Statement):
-    pass
-
-@dataclass
 class CallStatement(Statement):
     name: str
     args: list[Expression]
@@ -144,8 +131,6 @@ class PlayerConfig(Node):
 class Game(Node):
     stage: str
     players: list[PlayerConfig] = field(default_factory=list)
-    stocks: int = 4
-    time: int = 8
 
 @dataclass
 class StaticBlock(Node):
@@ -368,12 +353,6 @@ class Parser:
                 game.stage = self._expect(TokenType.IDENTIFIER).value
             elif self._check(TokenType.PLAYERS):
                 game.players = self._parse_players()
-            elif self._check(TokenType.STOCKS):
-                self._advance()
-                game.stocks = int(self._expect(TokenType.INTEGER).value)
-            elif self._check(TokenType.TIME):
-                self._advance()
-                game.time = int(self._expect(TokenType.INTEGER).value)
             else:
                 raise ParseError(
                     f"Unexpected token in Game: {self._current().type.name}",
@@ -473,12 +452,6 @@ class Parser:
             return self._parse_if()
         if self._check(TokenType.WHILE):
             return self._parse_while()
-        if self._check(TokenType.CONTINUE):
-            self._advance()
-            return ContinueStatement()
-        if self._check(TokenType.BREAK):
-            self._advance()
-            return BreakStatement()
         if self._check(TokenType.PLAYER):
             return self._parse_player_action()
         if self._check(TokenType.WAIT) or self._check(TokenType.HOLD):
@@ -750,31 +723,16 @@ class Parser:
                 self._expect(TokenType.RPAREN)
                 expr = CallExpr(name=name, args=call_args)
 
-            # Check for member access
-            return self._parse_member_access(expr)
+            return expr
 
         # Player port as expression
         if self._check(TokenType.PLAYER):
             return Identifier(name=self._advance().value)
 
-        # Built-in collections
-        if self._check(TokenType.PLAYERS):
-            self._advance()
-            return Identifier(name="Players")
-
         raise ParseError(
             f"Unexpected token: {self._current().type.name}",
             self._current(),
         )
-
-    def _parse_member_access(self, obj: Expression) -> Expression:
-        """Parse member access chain: obj.member.member."""
-        while self._check(TokenType.DOT):
-            self._advance()
-            member = self._expect(TokenType.IDENTIFIER).value
-            obj = MemberAccess(obj=obj, member=member)
-
-        return obj
 
     # --- Helper methods ---
 

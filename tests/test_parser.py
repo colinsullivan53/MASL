@@ -14,7 +14,7 @@ def parse(source: str, base_path: str | None = None) -> Match:
     return Parser(tokens, base_path=base_path).parse()
 
 def test_minimal_match():
-    ast = parse("Match { Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 } }")
+    ast = parse("Match { Game { Stage FinalDestination Players { Static P1 Fox } } }")
     assert ast.game.stage == "FinalDestination"
     assert len(ast.game.players) == 1
     assert ast.game.players[0].port == "P1"
@@ -22,7 +22,7 @@ def test_minimal_match():
     assert ast.game.players[0].player_type == "Static"
 
 def test_human_player():
-    ast = parse("Match { Game { Stage FinalDestination Players { Static P1 Fox Human P3 } Stocks 4 Time 8 } }")
+    ast = parse("Match { Game { Stage FinalDestination Players { Static P1 Fox Human P3 } } }")
     human = [p for p in ast.game.players if p.player_type == "Human"]
     assert len(human) == 1
     assert human[0].port == "P3"
@@ -31,7 +31,7 @@ def test_human_player():
 def test_static_block():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Static test {
             P1 attack :: wait 14
             P1 button(A) :: hold 3
@@ -46,7 +46,7 @@ def test_static_block():
 def test_chain_parsing():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Static test {
             P1 attack :: wait 14 :: hold 3
         }
@@ -62,7 +62,7 @@ def test_chain_parsing():
 def test_def_with_params():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Def attack(dir) {
             button(A)
         }
@@ -75,7 +75,7 @@ def test_def_with_params():
 def test_arity_overloading():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Def attack() { button(A) }
         Def attack(dir) { button(A) }
     }
@@ -88,7 +88,7 @@ def test_arity_overloading():
 def test_if_else():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Def test(dir) {
             if (dir == L) { button(A) } else { button(B) }
         }
@@ -102,7 +102,7 @@ def test_if_else():
 def test_while_loop():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Def test() {
             let i = 0
             while (i < 3) {
@@ -118,7 +118,7 @@ def test_while_loop():
 def test_let_statement():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         let x = 5
     }
     """)
@@ -128,7 +128,7 @@ def test_let_statement():
 def test_expressions():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Def test() {
             if (3 + 4 * 2 > 10 && true) { button(A) }
         }
@@ -140,7 +140,7 @@ def test_duplicate_static_player_error():
     with pytest.raises(ParseError):
         parse("""
         Match {
-            Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+            Game { Stage FinalDestination Players { Static P1 Fox } }
             Static a { P1 wait 10 }
             Static b { P1 wait 10 }
         }
@@ -152,7 +152,7 @@ def test_include_extracts_defs(tmp_path):
     source = f"""
     Match {{
         #INCLUDE "{lib}"
-        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} Stocks 4 Time 8 }}
+        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} }}
         Static test {{ P1 foo }}
     }}
     """
@@ -166,7 +166,7 @@ def test_include_extracts_lets(tmp_path):
     source = f"""
     Match {{
         #INCLUDE "{lib}"
-        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} Stocks 4 Time 8 }}
+        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} }}
     }}
     """
     ast = parse(source, base_path=str(tmp_path))
@@ -179,13 +179,13 @@ def test_include_skips_match(tmp_path):
     lib.write_text("""
     Def foo() { button(A) }
     Match {
-        Game { Stage Battlefield Players { Static P1 Marth } Stocks 4 Time 8 }
+        Game { Stage Battlefield Players { Static P1 Marth } }
     }
     """)
     source = f"""
     Match {{
         #INCLUDE "{lib}"
-        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} Stocks 4 Time 8 }}
+        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} }}
     }}
     """
     ast = parse(source, base_path=str(tmp_path))
@@ -203,7 +203,7 @@ def test_include_diamond_dedup(tmp_path):
     Match {{
         #INCLUDE "{a}"
         #INCLUDE "{b}"
-        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} Stocks 4 Time 8 }}
+        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} }}
     }}
     """
     ast = parse(source, base_path=str(tmp_path))
@@ -218,7 +218,7 @@ def test_include_circular_error(tmp_path):
     source = f"""
     Match {{
         #INCLUDE "{a}"
-        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} Stocks 4 Time 8 }}
+        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} }}
     }}
     """
     with pytest.raises(ParseError, match="[Cc]ircular"):
@@ -230,7 +230,7 @@ def test_include_glob(tmp_path):
     source = f"""
     Match {{
         #INCLUDE "{tmp_path}/*.masl"
-        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} Stocks 4 Time 8 }}
+        Game {{ Stage FinalDestination Players {{ Static P1 Fox }} }}
     }}
     """
     ast = parse(source, base_path=str(tmp_path))
@@ -241,7 +241,7 @@ def test_include_glob(tmp_path):
 def test_standalone_wait():
     ast = parse("""
     Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
+        Game { Stage FinalDestination Players { Static P1 Fox } }
         Static test {
             P1 wait 60
         }

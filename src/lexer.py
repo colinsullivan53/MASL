@@ -27,8 +27,6 @@ class TokenType(Enum):
     GAME = auto()
     STAGE = auto()
     PLAYERS = auto()
-    STOCKS = auto()
-    TIME = auto()
     STATIC = auto()
     HUMAN = auto()
     DEF = auto()
@@ -36,8 +34,6 @@ class TokenType(Enum):
     IF = auto()
     ELSE = auto()
     WHILE = auto()
-    CONTINUE = auto()
-    BREAK = auto()
     TRUE = auto()
     FALSE = auto()
     WAIT = auto()
@@ -49,7 +45,6 @@ class TokenType(Enum):
     LPAREN = auto()
     RPAREN = auto()
     COMMA = auto()
-    DOT = auto()
     CHAIN = auto()  # ::
 
     # Arithmetic operators
@@ -85,8 +80,6 @@ KEYWORDS = {
     "Game": TokenType.GAME,
     "Stage": TokenType.STAGE,
     "Players": TokenType.PLAYERS,
-    "Stocks": TokenType.STOCKS,
-    "Time": TokenType.TIME,
     "Static": TokenType.STATIC,
     "Human": TokenType.HUMAN,
     "Def": TokenType.DEF,
@@ -94,8 +87,6 @@ KEYWORDS = {
     "if": TokenType.IF,
     "else": TokenType.ELSE,
     "while": TokenType.WHILE,
-    "continue": TokenType.CONTINUE,
-    "break": TokenType.BREAK,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
     "wait": TokenType.WAIT,
@@ -197,7 +188,6 @@ class Lexer:
             "(": TokenType.LPAREN,
             ")": TokenType.RPAREN,
             ",": TokenType.COMMA,
-            ".": TokenType.DOT,
             "+": TokenType.PLUS,
             "-": TokenType.MINUS,
             "*": TokenType.STAR,
