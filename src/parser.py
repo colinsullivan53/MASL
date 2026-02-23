@@ -58,11 +58,6 @@ class CallExpr(Expression):
     args: list[Expression]
 
 @dataclass
-class GameQuery(Expression):
-    method: str
-    args: list[Expression]
-
-@dataclass
 class MemberAccess(Expression):
     obj: Expression
     member: str
@@ -116,12 +111,6 @@ class IfStatement(Statement):
 @dataclass
 class WhileStatement(Statement):
     condition: Expression
-    body: list[Statement]
-
-@dataclass
-class ForStatement(Statement):
-    variable: str
-    iterable: Expression
     body: list[Statement]
 
 @dataclass
@@ -282,8 +271,6 @@ class Parser:
                 if stmt.else_body:
                     players.update(self._extract_players_from_statements(stmt.else_body))
             elif isinstance(stmt, WhileStatement):
-                players.update(self._extract_players_from_statements(stmt.body))
-            elif isinstance(stmt, ForStatement):
                 players.update(self._extract_players_from_statements(stmt.body))
 
         return players
@@ -486,8 +473,6 @@ class Parser:
             return self._parse_if()
         if self._check(TokenType.WHILE):
             return self._parse_while()
-        if self._check(TokenType.FOR):
-            return self._parse_for()
         if self._check(TokenType.CONTINUE):
             self._advance()
             return ContinueStatement()
@@ -547,18 +532,6 @@ class Parser:
         self._expect(TokenType.RBRACE)
 
         return WhileStatement(condition=condition, body=body)
-
-    def _parse_for(self) -> ForStatement:
-        """Parse for statement."""
-        self._expect(TokenType.FOR)
-        variable = self._expect(TokenType.IDENTIFIER).value
-        self._expect(TokenType.IN)
-        iterable = self._parse_expression()
-        self._expect(TokenType.LBRACE)
-        body = self._parse_statement_list()
-        self._expect(TokenType.RBRACE)
-
-        return ForStatement(variable=variable, iterable=iterable, body=body)
 
     def _parse_player_action(self) -> PlayerAction:
         """Parse player action with chain."""
@@ -759,21 +732,6 @@ class Parser:
             expr = self._parse_expression()
             self._expect(TokenType.RPAREN)
             return expr
-
-        # Game query: Game.METHOD(args)
-        if self._check(TokenType.GAME):
-            self._advance()
-            self._expect(TokenType.DOT)
-            method = self._expect(TokenType.IDENTIFIER).value
-            self._expect(TokenType.LPAREN)
-            args: list[Expression] = []
-            if not self._check(TokenType.RPAREN):
-                args.append(self._parse_expression())
-                while self._check(TokenType.COMMA):
-                    self._advance()
-                    args.append(self._parse_expression())
-            self._expect(TokenType.RPAREN)
-            return GameQuery(method=method, args=args)
 
         # Identifier (variable or function)
         if self._check(TokenType.IDENTIFIER):

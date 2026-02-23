@@ -36,8 +36,6 @@ class TokenType(Enum):
     IF = auto()
     ELSE = auto()
     WHILE = auto()
-    FOR = auto()
-    IN = auto()
     CONTINUE = auto()
     BREAK = auto()
     TRUE = auto()
@@ -96,8 +94,6 @@ KEYWORDS = {
     "if": TokenType.IF,
     "else": TokenType.ELSE,
     "while": TokenType.WHILE,
-    "for": TokenType.FOR,
-    "in": TokenType.IN,
     "continue": TokenType.CONTINUE,
     "break": TokenType.BREAK,
     "true": TokenType.TRUE,

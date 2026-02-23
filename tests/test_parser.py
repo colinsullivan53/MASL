@@ -4,7 +4,7 @@ import pytest
 from src.lexer import Lexer
 from src.parser import (
     Parser, Match, StaticBlock, PlayerAction, Def, LetStatement,
-    IfStatement, WhileStatement, ForStatement, ParseError,
+    IfStatement, WhileStatement, ParseError,
     ActionSegment, WaitSegment, HoldSegment, Identifier,
     BinaryOp, IntegerLiteral, CallStatement
 )
@@ -251,13 +251,3 @@ def test_standalone_wait():
     assert isinstance(stmt, PlayerAction)
     assert isinstance(stmt.chain[0], WaitSegment)
 
-def test_game_query():
-    ast = parse("""
-    Match {
-        Game { Stage FinalDestination Players { Static P1 Fox } Stocks 4 Time 8 }
-        Def test() {
-            if (Game.DIST(P1, P2) < 50) { button(A) }
-        }
-    }
-    """)
-    assert ast is not None

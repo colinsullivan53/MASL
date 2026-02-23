@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 from src.parser import (
     Match, Def, StaticBlock, PlayerAction, ActionSegment, WaitSegment, HoldSegment,
-    LetStatement, AssignStatement, IfStatement, WhileStatement, ForStatement,
+    LetStatement, AssignStatement, IfStatement, WhileStatement,
     CallStatement, Expression, IntegerLiteral, FloatLiteral, StringLiteral,
     BoolLiteral, Identifier, BinaryOp, UnaryOp, CallExpr,
 )
@@ -321,15 +321,6 @@ class _CompilerContext:
                     iterations += 1
                     if iterations > MAX_ITERATIONS:
                         raise self._error(f"While loop exceeded {MAX_ITERATIONS} iterations")
-                    items = self._exec_statements(stmt.body, variables, port, append_to_queue=append_to_queue)
-                    output.extend(items)
-
-            elif isinstance(stmt, ForStatement):
-                iterable = self.eval_expr(stmt.iterable, variables)
-                if not hasattr(iterable, '__iter__'):
-                    raise self._error(f"For loop target is not iterable: {iterable}")
-                for val in iterable:  # type: ignore[union-attr]
-                    variables[stmt.variable] = val
                     items = self._exec_statements(stmt.body, variables, port, append_to_queue=append_to_queue)
                     output.extend(items)
 
